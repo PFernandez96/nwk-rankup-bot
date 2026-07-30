@@ -48,8 +48,18 @@ def rank_for(level):
     return None
 
 
+def wom_headers():
+    headers = {"User-Agent": USER_AGENT}
+    # Free API key (ask in the WOM Discord) lifts the shared-IP rate limits
+    # that GitHub runners are subject to.
+    api_key = os.environ.get("WOM_API_KEY")
+    if api_key:
+        headers["x-api-key"] = api_key
+    return headers
+
+
 def get_json(url, attempts=4):
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    req = urllib.request.Request(url, headers=wom_headers())
     for attempt in range(attempts):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
@@ -121,7 +131,7 @@ def request_group_update():
     req = urllib.request.Request(
         f"{WOM_API}/groups/{GROUP_ID}/update-all",
         data=body,
-        headers={"Content-Type": "application/json", "User-Agent": USER_AGENT},
+        headers={"Content-Type": "application/json", **wom_headers()},
         method="POST",
     )
     try:

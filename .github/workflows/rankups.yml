@@ -22,7 +22,8 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           WOM_VERIFICATION_CODE: ${{ secrets.WOM_VERIFICATION_CODE }}
-        run: python3 rankup_bot.py
+          WOM_API_KEY: ${{ secrets.WOM_API_KEY }}
+        run: python3 -u rankup_bot.py
 
       - name: Commit updated state
         run: |
