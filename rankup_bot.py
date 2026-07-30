@@ -57,7 +57,10 @@ def get_json(url, attempts=4):
         except urllib.error.HTTPError as err:
             if err.code != 429 or attempt == attempts - 1:
                 raise
-            wait = int(err.headers.get("Retry-After") or 0) or 30 * (attempt + 1)
+            # Cap the sleep: WOM sends huge Retry-After values to shared IPs
+            # (e.g. GitHub runners); better to fail fast and let the next
+            # scheduled run try than to burn billed minutes sleeping.
+            wait = min(int(err.headers.get("Retry-After") or 0) or 30 * (attempt + 1), 120)
             print(f"Rate limited by WOM, retrying in {wait}s...")
             time.sleep(wait)
 
@@ -107,6 +110,29 @@ def post_discord(lines):
             chunk.append(line)
 
 
+def request_group_update():
+    """Ask WOM to refresh outdated members, so clanmates without the RuneLite
+    plugin still get their rank-ups noticed. No-op without the group's
+    verification code (optional WOM_VERIFICATION_CODE secret)."""
+    code = os.environ.get("WOM_VERIFICATION_CODE")
+    if not code:
+        return
+    body = json.dumps({"verificationCode": code}).encode()
+    req = urllib.request.Request(
+        f"{WOM_API}/groups/{GROUP_ID}/update-all",
+        data=body,
+        headers={"Content-Type": "application/json", "User-Agent": USER_AGENT},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            resp.read()
+        print("Requested WOM refresh of outdated members.")
+    except urllib.error.HTTPError as err:
+        # 429 just means we asked again too soon — refresh is best-effort.
+        print(f"Group refresh request skipped (HTTP {err.code}).")
+
+
 def main():
     dry_run = "--dry-run" in sys.argv
 
@@ -117,6 +143,7 @@ def main():
     players = state.setdefault("players", {})
     first_run = not players
 
+    request_group_update()
     current = fetch_levels()
 
     alerts = []

@@ -49,7 +49,10 @@ To change it, edit `THRESHOLDS` in `rankup_bot.py`.
 
 1. Repo secret `DISCORD_WEBHOOK_URL` → the channel webhook
    (Settings → Secrets and variables → Actions).
-2. That's it. `workflow_dispatch` lets you trigger a manual run from the
+2. Optional repo secret `WOM_VERIFICATION_CODE` → the WOM group's
+   verification code. With it, each run asks WOM to refresh outdated
+   members, so clanmates without the RuneLite plugin are covered too.
+3. That's it. `workflow_dispatch` lets you trigger a manual run from the
    Actions tab to test.
 
 ## Local testing

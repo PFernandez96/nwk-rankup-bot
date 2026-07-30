@@ -12,6 +12,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -20,6 +21,7 @@ jobs:
       - name: Check for rank-ups
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WOM_VERIFICATION_CODE: ${{ secrets.WOM_VERIFICATION_CODE }}
         run: python3 rankup_bot.py
 
       - name: Commit updated state
