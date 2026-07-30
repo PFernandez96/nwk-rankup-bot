@@ -62,3 +62,36 @@ python3 rankup_bot.py --dry-run   # fetches + prints, never posts to Discord
 ```
 
 No dependencies — Python 3 stdlib only.
+
+## Operations
+
+- **Is it running?** → Actions tab. Green every ~30 min. A red run
+  self-heals on the next tick (usually WOM rate limiting); only investigate
+  if several in a row fail.
+- **Manual run** → Actions → Rank-up alerts → Run workflow.
+- **Change cadence** → the `cron:` line in `.github/workflows/rankups.yml`.
+- **Change the rank table** → `THRESHOLDS` in `rankup_bot.py`.
+- **Webhook leaked / channel change** → Discord channel → Integrations →
+  Webhooks (regenerate or repoint), then update the `DISCORD_WEBHOOK_URL`
+  secret.
+- **Secrets** (Settings → Secrets and variables → Actions):
+  - `DISCORD_WEBHOOK_URL` — required, where alerts go
+  - `WOM_VERIFICATION_CODE` — optional, enables auto-refresh of stale members
+  - `WOM_API_KEY` — optional, lifts WOM rate limits; not currently needed
+- **Someone got announced wrong / re-announce someone** → edit their entry in
+  `state.json` (lower the level to re-trigger, raise it to suppress).
+
+## Branching
+
+`main` is protected — changes go through a PR from `dev` (or a feature
+branch). The GitHub Actions bot bypasses protection so scheduled runs can
+keep committing `state.json` to `main`.
+
+## Gotchas learned the hard way
+
+- The WOM group-hiscores endpoint ignores `limit`/`offset` and returns the
+  full member list in one response. Do not paginate it — that loops forever
+  and rate-limits you into oblivion.
+- WOM sends very large `Retry-After` values; sleeps are capped at 120s and
+  the whole job at 15 min so a bad day fails fast instead of burning
+  Actions minutes.
