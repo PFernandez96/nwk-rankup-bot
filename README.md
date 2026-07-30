@@ -84,8 +84,8 @@ No dependencies — Python 3 stdlib only.
 ## Branching
 
 `main` is protected — changes go through a PR from `dev` (or a feature
-branch). The GitHub Actions bot bypasses protection so scheduled runs can
-keep committing `state.json` to `main`.
+branch). Scheduled runs commit `state.json` to `main` via a deploy key,
+which is a ruleset bypass actor.
 
 ## Gotchas learned the hard way
 

@@ -17,6 +17,11 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Deploy key: lets the bot push state.json to protected main
+          # (it's a ruleset bypass actor; GITHUB_TOKEN can't be one on
+          # a user-owned repo).
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Check for rank-ups
         env:
