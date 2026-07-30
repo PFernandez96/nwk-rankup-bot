@@ -1,0 +1,33 @@
+name: Rank-up alerts
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: rankups
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for rank-ups
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: python3 rankup_bot.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "nwk-rankup-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state.json
+          if ! git diff --cached --quiet; then
+            git commit -m "state: $(date -u +%FT%TZ)"
+            git push
+          fi
