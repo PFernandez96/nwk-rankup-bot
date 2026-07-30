@@ -24,7 +24,6 @@ GROUP_ID = 12678  # Noobs With Keyboards — https://wiseoldman.net/groups/12678
 WOM_API = "https://api.wiseoldman.net/v2"
 USER_AGENT = "nwk-rankup-bot (Noobs With Keyboards clan rank-up alerts)"
 STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "state.json")
-PAGE_SIZE = 50  # WOM API max per page
 
 # The clan's "How to Rank Up" table, highest first.
 THRESHOLDS = [
@@ -76,25 +75,22 @@ def get_json(url, attempts=4):
 
 
 def fetch_levels():
-    """username -> {name, level} for every group member, via group hiscores."""
+    """username -> {name, level} for every group member, via group hiscores.
+
+    This endpoint returns the entire member list in one response — its
+    limit/offset params are not honored, so paginating would loop forever.
+    """
+    rows = get_json(f"{WOM_API}/groups/{GROUP_ID}/hiscores?metric=overall")
     levels = {}
-    offset = 0
-    while True:
-        page = get_json(
-            f"{WOM_API}/groups/{GROUP_ID}/hiscores"
-            f"?metric=overall&limit={PAGE_SIZE}&offset={offset}"
-        )
-        for row in page:
-            player = row["player"]
-            level = (row.get("data") or {}).get("level")
-            if level:
-                levels[player["username"]] = {
-                    "name": player["displayName"],
-                    "level": level,
-                }
-        if len(page) < PAGE_SIZE:
-            return levels
-        offset += PAGE_SIZE
+    for row in rows:
+        player = row["player"]
+        level = (row.get("data") or {}).get("level")
+        if level:
+            levels[player["username"]] = {
+                "name": player["displayName"],
+                "level": level,
+            }
+    return levels
 
 
 def post_discord(lines):
